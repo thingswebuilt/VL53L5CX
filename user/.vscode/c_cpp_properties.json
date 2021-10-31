@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/ebad/VL53L5CX_Linux_driver_1.1.1/user",
+                "/home/ebad/VL53L5CX_Linux_driver_1.1.1/user/test",
+                "/home/ebad/VL53L5CX_Linux_driver_1.1.1/user/platform",
+                "/home/ebad/VL53L5CX_Linux_driver_1.1.1/user/uld-driver/inc"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-arm64"
+        }
+    ],
+    "version": 4
+}
