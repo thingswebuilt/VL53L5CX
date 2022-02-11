@@ -22,17 +22,10 @@ iheight, iwidth = 480, 640  # raw image size
 output_size = (228, 304)
 to_tensor = transforms.ToTensor()
 
-def val_transform(rgb):
-    transform = transforms.Compose([
-        transforms.Resize(240.0 / iheight),
-        transforms.CenterCrop(output_size),
-    ])
-    rgb_np = transform(rgb)
-    rgb_np = np.asfarray(rgb_np, dtype='float') / 255
-    
-    return rgb_np
 
 def create_rgbd(rgb, sparse_depth):
+    #rgb =  np.asfarray(rgb, dtype='float') / 255
+    rgb = rgb/255
     rgbd = np.append(rgb, np.expand_dims(sparse_depth, axis=2), axis=2)
     return rgbd
 
@@ -118,7 +111,7 @@ ax2 = plt.subplot(1,2,2)
 
 im1 = ax1.imshow(frame)
 #im2 = ax2.imshow(data , vmin=0, vmax=10)
-im2 = ax2.imshow(data_sparse , interpolation = 'nearest', vmin=0, vmax=2)
+im2 = ax2.imshow(data_sparse , interpolation = 'nearest', vmin=0.6, vmax=1.2)
 
 
 plt.colorbar(im2,fraction=0.05, pad=0.04)
@@ -152,14 +145,14 @@ def animate(i):
                 tmp1 = sensor.get_ranging_data(0,counter1)
                 if tmp1 < 1000:
                     data[x][y] = tmp1
-                    data_sparse[int(x*28.5)][int(y*38)] = int(tmp1/100)
+                    data_sparse[int(x*28.5)][int(y*38)] = tmp1/100
                 else:
                     data[x][y] = 1000
                     data_sparse[int(x*28.5)][int(y*38)] = 10
             else:
                 #data[x][y] = sensor.get_ranging_data(0,counter1)
                 data[x][y] = 1000
-                data_sparse[int(x*28.5)][int(y*38)] = 10
+                data_sparse[int(x*28.5)][int(y*38)] = 0
             
 
 
@@ -183,8 +176,7 @@ def animate(i):
     print("Getting output")
     # Get outputs
     tvm_output = m.get_output(0)
-    tvm_output = np.squeeze(tvm_output.numpy())/100
-    print(tvm_output.shape)
+    tvm_output = np.squeeze(tvm_output.numpy())
     print(np.max(tvm_output))
     print(np.min(tvm_output))
     from numpy import asarray
