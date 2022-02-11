@@ -1,5 +1,7 @@
 import ctypes
 
+import tvm
+
 import sys 
 import signal
 
@@ -13,6 +15,34 @@ import time
 import cv2
 
 from multiprocessing import Process
+
+import dataloaders.transforms as transforms
+
+iheight, iwidth = 480, 640  # raw image size
+output_size = (228, 304)
+to_tensor = transforms.ToTensor()
+
+def val_transform(rgb):
+    transform = transforms.Compose([
+        transforms.Resize(240.0 / iheight),
+        transforms.CenterCrop(output_size),
+    ])
+    rgb_np = transform(rgb)
+    rgb_np = np.asfarray(rgb_np, dtype='float') / 255
+    
+    return rgb_np
+
+def create_rgbd(rgb, sparse_depth):
+    rgbd = np.append(rgb, np.expand_dims(sparse_depth, axis=2), axis=2)
+    return rgbd
+
+from tvm.contrib import graph_executor
+
+dev = tvm.cuda(0)
+dtype = "float32"
+lib = tvm.runtime.load_module('rgbd8_trt16.so')
+m = graph_executor.GraphModule(lib["default"](dev))
+
 
 # Camera Initialize
 print("[INFO] starting video stream...")
@@ -49,7 +79,7 @@ if not (status):
 # Using 4x4, min frequency is 1Hz and max is 60Hz
 # Using 8x8, min frequency is 1Hz and max is 15Hz
 
-status = sensor.set_ranging_frequency(0,1)
+status = sensor.set_ranging_frequency(0,5)
 if not (status):
     print("Ranging Frequency Set")
 
@@ -78,8 +108,8 @@ frame = vs.read()
 frame = imutils.resize(frame)
 frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
-data = np.zeros((8, 8),dtype=int)
-data_sparse = np.zeros((228, 304),dtype=int)
+data = np.zeros((8, 8),dtype=float)
+data_sparse = np.zeros((228, 304),dtype=float)
 
 
 ax1 = plt.subplot(1,2,1)
@@ -87,8 +117,8 @@ ax2 = plt.subplot(1,2,2)
 #ax3 = plt.subplot(1,3,3)
 
 im1 = ax1.imshow(frame)
-im2 = ax2.imshow(data , vmin=0, vmax=750)
-#im3 = ax3.imshow(data_sparse , vmin=0, vmax=1500)
+#im2 = ax2.imshow(data , vmin=0, vmax=10)
+im2 = ax2.imshow(data_sparse , interpolation = 'nearest', vmin=0, vmax=2)
 
 
 plt.colorbar(im2,fraction=0.05, pad=0.04)
@@ -122,26 +152,49 @@ def animate(i):
                 tmp1 = sensor.get_ranging_data(0,counter1)
                 if tmp1 < 1000:
                     data[x][y] = tmp1
-                    data_sparse[int(x*28.5)][int(y*38)] = tmp1
+                    data_sparse[int(x*28.5)][int(y*38)] = int(tmp1/100)
                 else:
                     data[x][y] = 1000
-                    data_sparse[int(x*28.5)][int(y*38)] = 1000
+                    data_sparse[int(x*28.5)][int(y*38)] = 10
             else:
                 #data[x][y] = sensor.get_ranging_data(0,counter1)
                 data[x][y] = 1000
-                data_sparse[int(x*28.5)][int(y*38)] = 1000
+                data_sparse[int(x*28.5)][int(y*38)] = 10
+            
+
 
             counter1=counter1+1
     
     counter1 = 0
-    endtime = time.time()
-    # data = np.fliplr(data)        
-    im1.set_data(frame)
-    im2.set_data(data)
-    #im3.set_data(data_sparse)
-    endtime2 = time.time()
+    
+    input_name = "input"
+    # rgb = val_transform(frame)
 
-    print(endtime-starttime," -- ",endtime2-starttime," --- ",endtime2-starttime1)
+    # print("shape  ",rgb.shape," ",data_sparse.shape)
+
+    rgbd = create_rgbd(frame, data_sparse)
+    input_tensor = to_tensor(rgbd)
+    input_tensor = input_tensor.unsqueeze(0)
+
+    print("Setting input")
+    m.set_input(input_name, input_tensor)
+    print("Running")
+    m.run()
+    print("Getting output")
+    # Get outputs
+    tvm_output = m.get_output(0)
+    tvm_output = np.squeeze(tvm_output.numpy())/100
+    print(tvm_output.shape)
+    print(np.max(tvm_output))
+    print(np.min(tvm_output))
+    from numpy import asarray
+    from numpy import savetxt
+    data2 = asarray(tvm_output)
+    savetxt('data123.csv',data2,delimiter='.')
+
+    im2.set_data(tvm_output)
+    im1.set_data(frame)
+    #im2.set_data(data)
     
 anim = animation.FuncAnimation(plt.gcf(), animate, init_func=init)
 plt.show()

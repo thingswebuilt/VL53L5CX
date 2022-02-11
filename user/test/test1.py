@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 sensor = ctypes.CDLL('/home/ebad/VL53L5CX_Linux_driver_1.1.1/user/test/menu.so')
+counter2 = 0
+data2 = np.zeros((8, 8),dtype=int)
 
 # # Sensor Init
 status = sensor.init_sensor(0)
@@ -85,8 +87,12 @@ def animate(i):
             counter1=counter1+1
 
     counter1 = 0
+    global counter2, data2
+    if counter2 < 50:
+        data2 = data2 + data
+    counter2 = counter2 + 1
     # data = np.fliplr(data)        
-    print(data)
+    print(data2)
     im.set_data(data)
 
 anim = animation.FuncAnimation(fig, animate, init_func=init)
