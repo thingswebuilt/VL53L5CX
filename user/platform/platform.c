@@ -106,9 +106,9 @@ int32_t vl53l5cx_comms_init(VL53L5CX_Platform * p_platform)
 		return VL53L5CX_COMMS_ERROR;
 	}
 #else
-	p_platform->fd = open("/dev/i2c-0", O_RDONLY);
+	p_platform->fd = open("/dev/i2c-1", O_RDONLY);
 	if (p_platform->fd == -1) {
-		LOG("Failed to open /dev/i2c-0\n");
+		LOG("Failed to open /dev/i2c-1\n");
 		return VL53L5CX_COMMS_ERROR;
 	}
 
