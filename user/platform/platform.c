@@ -66,6 +66,7 @@
 
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+#include <i2c/smbus.h>
 
 #include <sys/ioctl.h>
 
@@ -112,10 +113,24 @@ int32_t vl53l5cx_comms_init(VL53L5CX_Platform * p_platform)
 		return VL53L5CX_COMMS_ERROR;
 	}
 
-	if (ioctl(p_platform->fd, I2C_SLAVE, 0x29) <0) {
+	int status;
+        status = ioctl(p_platform->fd, I2C_SLAVE, 0x29);
+        LOG("ioctl status %d\n", status);
+	if (status <0) {
 		LOG("Could not speak to the device on the i2c bus\n");
 		return VL53L5CX_COMMS_ERROR;
 	}
+
+
+	/* Using SMBus commands */
+        int res;
+	res = i2c_smbus_write_quick(p_platform->fd, I2C_SMBUS_WRITE);
+	if (res < 0) {
+		LOG("i2c transaction failed\n");
+                return VL53L5CX_COMMS_ERROR;
+		/* ERROR HANDLING: i2c transaction failed */
+	}
+
 #endif
 
 	LOG("Opened ST TOF Dev = %d\n", p_platform->fd);

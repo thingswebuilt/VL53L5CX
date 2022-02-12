@@ -12,6 +12,8 @@ sensor = ctypes.CDLL('/home/pi/diggity/ES_VL53L5CX/user/test/menu.so')
 # # Sensor Init
 status = sensor.init_sensor(0)
 print(status)
+if (status<0):
+   sys.exit(0)
 
 # Attach a signal handler to catch SIGINT (Ctrl+C) and exit gracefully
 def exit_handler(signal, frame):
@@ -62,11 +64,11 @@ for reading in range(3):
     for x in range(8):
         for y in range(8):
             status = sensor.get_ranging_status(0,counter1)
+            tmp1 = sensor.get_ranging_data(0,counter1)
             if(status == 5):
-                tmp1 = sensor.get_ranging_data(0,counter1)
                 data[x][y] = tmp1
             else:
-                data[x][y] = -status
+                data[x][y] = -tmp1
 
             counter1=counter1+1
 

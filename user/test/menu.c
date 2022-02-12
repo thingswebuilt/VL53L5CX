@@ -51,14 +51,22 @@ void sighandler(int signal)
 int init_sensor(int sensor)
 {
 	// VL53L5CX_Configuration Dev = sensors[sensor];
-	
+
 	int status = vl53l5cx_comms_init(&sensors[0].platform);
-	status = vl53l5cx_init(&sensors[0]);
-	//printf("%d \n",Dev.platform.address);
-	
+        printf("initial status: %d\n", status);
 	if(status)
 	{
 		printf("VL53L5CX comms init failed\n");
+		return -1;
+	}
+	status = vl53l5cx_init(&sensors[0]);
+        printf("second status: %d\n", status);
+
+	//printf("%d \n",Dev.platform.address);
+
+	if(status)
+	{
+		printf("VL53L5CX init failed\n");
 		return -1;
 	}
 
