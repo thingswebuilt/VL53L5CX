@@ -11,7 +11,6 @@ sensor = ctypes.CDLL('/home/pi/diggity/ES_VL53L5CX/user/test/menu.so')
 
 # # Sensor Init
 status = sensor.init_sensor(0)
-print(status)
 if (status<0):
    sys.exit(0)
 

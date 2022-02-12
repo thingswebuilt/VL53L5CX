@@ -114,8 +114,7 @@ int32_t vl53l5cx_comms_init(VL53L5CX_Platform * p_platform)
 	}
 
 	int status;
-        status = ioctl(p_platform->fd, I2C_SLAVE, 0x29);
-        LOG("ioctl status %d\n", status);
+    status = ioctl(p_platform->fd, I2C_SLAVE, 0x29);
 	if (status <0) {
 		LOG("Could not speak to the device on the i2c bus\n");
 		return VL53L5CX_COMMS_ERROR;
@@ -123,7 +122,7 @@ int32_t vl53l5cx_comms_init(VL53L5CX_Platform * p_platform)
 
 
 	/* Using SMBus commands */
-        int res;
+    int res;
 	res = i2c_smbus_write_quick(p_platform->fd, I2C_SMBUS_WRITE);
 	if (res < 0) {
 		LOG("i2c transaction failed\n");
